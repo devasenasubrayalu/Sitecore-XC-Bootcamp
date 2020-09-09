@@ -26,18 +26,26 @@ namespace Plugin.Bootcamp.Exercises.Order.Export.Pipelines.Blocks
             Contract.Requires(context != null);
 
             /*Checks the order and exports to the configured file path*/
-            var exportComponent = order.GetComponent<ExportedOrderComponent>();
-
-            exportComponent.DateExported = DateTime.Now;
-            exportComponent.ExportFilename = context.GetPolicy<OrderExportPolicy>().ExportLocation + @"\" + order.OrderConfirmationId + ".json";
-            var orderAsString = JsonConvert.SerializeObject(order);
-
-            using (StreamWriter sw = new StreamWriter(exportComponent.ExportFilename))
+            try
             {
-                await sw.WriteAsync(orderAsString).ConfigureAwait(false);
-            }
+                var exportComponent = order.GetComponent<ExportedOrderComponent>();
 
-            var persistEntityArgument = await _persistEntityPipeline.Run(new PersistEntityArgument(order), context).ConfigureAwait(false);
+                exportComponent.DateExported = DateTime.Now;
+                exportComponent.ExportFilename = context.GetPolicy<OrderExportPolicy>().ExportLocation + @"\" + order.OrderConfirmationId + ".json";
+                var orderAsString = JsonConvert.SerializeObject(order);
+
+                using (StreamWriter sw = new StreamWriter(exportComponent.ExportFilename))
+                {
+                    await sw.WriteAsync(orderAsString).ConfigureAwait(false);
+                }
+
+                var persistEntityArgument = await _persistEntityPipeline.Run(new PersistEntityArgument(order), context).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                context.CommerceContext.LogException("Something went wrong in ExportOrderToFileBlock", ex);
+                throw;
+            }
             return order;
         }
     }

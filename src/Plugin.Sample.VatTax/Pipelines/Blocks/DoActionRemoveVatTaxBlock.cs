@@ -30,10 +30,17 @@ namespace Plugin.Bootcamp.Exercises.VatTax.EntityViews
                 return entityView;
             }
 
+            try
+            {
+                await _commerceCommander.Command<DeleteEntityCommand>()
+                    .Process(context.CommerceContext, entityView.ItemId).ConfigureAwait(false);
+            }
 
-            await _commerceCommander.Command<DeleteEntityCommand>()
-                .Process(context.CommerceContext, entityView.ItemId).ConfigureAwait(false);
-
+            catch (Exception ex)
+            {
+                context.CommerceContext.LogException("Something went wrong in DoActionRemoveVatTaxBlock", ex);
+                throw;
+            }
             return entityView;
         }
     }

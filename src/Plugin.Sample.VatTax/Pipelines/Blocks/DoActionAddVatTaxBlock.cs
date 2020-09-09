@@ -33,26 +33,32 @@ namespace Plugin.Bootcamp.Exercises.VatTax.EntityViews
             {
                 return entityView;
             }
-
-            var taxTag = entityView.Properties.First(p => p.Name == "TaxTag").Value ?? "";
-            var countryCode = entityView.Properties.First(p => p.Name == "CountryCode").Value ?? "";
-            var taxPct = Convert.ToDecimal(entityView.Properties.First(p => p.Name == "TaxPct").Value ?? "0", CultureInfo.InvariantCulture);
-
-            using (var vatTaxEntity = new VatTaxEntity
+            try
             {
-                Id = CommerceEntity.IdPrefix<VatTaxEntity>() + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture),
-                Name = string.Empty,
-                TaxTag = taxTag,
-                CountryCode = countryCode,
-                TaxPct = taxPct
-            })
-            {
-                vatTaxEntity.GetComponent<ListMembershipsComponent>().Memberships.Add(CommerceEntity.ListName<VatTaxEntity>());
+                var taxTag = entityView.Properties.First(p => p.Name == "TaxTag").Value ?? "";
+                var countryCode = entityView.Properties.First(p => p.Name == "CountryCode").Value ?? "";
+                var taxPct = Convert.ToDecimal(entityView.Properties.First(p => p.Name == "TaxPct").Value ?? "0", CultureInfo.InvariantCulture);
 
-                /*Saves the item*/
-                await _commerceCommander.PersistEntity(context.CommerceContext, vatTaxEntity).ConfigureAwait(false);
+                using (var vatTaxEntity = new VatTaxEntity
+                {
+                    Id = CommerceEntity.IdPrefix<VatTaxEntity>() + Guid.NewGuid().ToString("N", CultureInfo.InvariantCulture),
+                    Name = string.Empty,
+                    TaxTag = taxTag,
+                    CountryCode = countryCode,
+                    TaxPct = taxPct
+                })
+                {
+                    vatTaxEntity.GetComponent<ListMembershipsComponent>().Memberships.Add(CommerceEntity.ListName<VatTaxEntity>());
+
+                    /*Saves the item*/
+                    await _commerceCommander.PersistEntity(context.CommerceContext, vatTaxEntity).ConfigureAwait(false);
+                }
             }
-
+            catch (Exception ex)
+            {
+                context.CommerceContext.LogException("Something went wrong in DoActionAddVatTaxBlock", ex);
+                throw;
+            }
 
 
             return entityView;

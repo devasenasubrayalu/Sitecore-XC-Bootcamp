@@ -42,19 +42,25 @@ namespace Plugin.Bootcamp.Exercises.Catalog.WarrantyInformation.Pipelines.Blocks
             {
                 return arg;
             }
+            try
+            {
+                var component = entity.GetComponent<WarrantyNotesComponent>(arg.ItemId);
 
-            var component = entity.GetComponent<WarrantyNotesComponent>(arg.ItemId);
+                // assigning entity view properties to component//
 
-            // assigning entity view properties to component//
+                component.WarrantyInformation = arg.Properties.FirstOrDefault(x =>
+                  x.Name.Equals(nameof(WarrantyNotesComponent.WarrantyInformation), StringComparison.OrdinalIgnoreCase))?.Value;
+                component.NumberOfYears = Int32.Parse(arg.Properties.FirstOrDefault(x =>
+                  x.Name.Equals(nameof(WarrantyNotesComponent.NumberOfYears), StringComparison.OrdinalIgnoreCase))?.Value);
 
-            component.WarrantyInformation = arg.Properties.FirstOrDefault(x =>
-              x.Name.Equals(nameof(WarrantyNotesComponent.WarrantyInformation), StringComparison.OrdinalIgnoreCase))?.Value;
-            component.NumberOfYears = Int32.Parse(arg.Properties.FirstOrDefault(x =>
-              x.Name.Equals(nameof(WarrantyNotesComponent.NumberOfYears), StringComparison.OrdinalIgnoreCase))?.Value);
-
-            // Persist/Save changes//
-            await this._commerceCommander.Pipeline<IPersistEntityPipeline>().Run(new PersistEntityArgument(entity), context);
-
+                // Persist/Save changes//
+                await this._commerceCommander.Pipeline<IPersistEntityPipeline>().Run(new PersistEntityArgument(entity), context);
+            }
+            catch(Exception ex)
+            {
+                context.CommerceContext.LogException("Something went wrong in DoActionEditWarrantyNotesBlock", ex);
+                throw;
+            }
 
             return arg;
         }
